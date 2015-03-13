@@ -25,6 +25,21 @@
 /* Begin PBXFileReference section */
 		7AFEB18A1AB2D20F005AAB3E /* Quoridor */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Quoridor; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AFEB18D1AB2D20F005AAB3E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		7AFEB1951AB341D4005AAB3E /* client */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = client; sourceTree = "<group>"; };
+		7AFEB1961AB341D4005AAB3E /* client.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = client.cpp; sourceTree = "<group>"; };
+		7AFEB1971AB341D4005AAB3E /* Game.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = Game.py; sourceTree = "<group>"; };
+		7AFEB1981AB341D4005AAB3E /* Game.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = Game.pyc; sourceTree = "<group>"; };
+		7AFEB1991AB341D4005AAB3E /* GameStack.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = GameStack.py; sourceTree = "<group>"; };
+		7AFEB19A1AB341D4005AAB3E /* GameStack.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = GameStack.pyc; sourceTree = "<group>"; };
+		7AFEB19B1AB341D4005AAB3E /* Graph.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = Graph.py; sourceTree = "<group>"; };
+		7AFEB19C1AB341D4005AAB3E /* Graph.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = Graph.pyc; sourceTree = "<group>"; };
+		7AFEB19D1AB341D4005AAB3E /* Helpers.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = Helpers.py; sourceTree = "<group>"; };
+		7AFEB19E1AB341D4005AAB3E /* Helpers.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = Helpers.pyc; sourceTree = "<group>"; };
+		7AFEB19F1AB341D4005AAB3E /* Player.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = Player.py; sourceTree = "<group>"; };
+		7AFEB1A01AB341D4005AAB3E /* Player.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = Player.pyc; sourceTree = "<group>"; };
+		7AFEB1A11AB341D4005AAB3E /* SpecialGraphs.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = SpecialGraphs.py; sourceTree = "<group>"; };
+		7AFEB1A21AB341D4005AAB3E /* SpecialGraphs.pyc */ = {isa = PBXFileReference; lastKnownFileType = file; path = SpecialGraphs.pyc; sourceTree = "<group>"; };
+		7AFEB1A31AB341D4005AAB3E /* TkBoard.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = TkBoard.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +56,7 @@
 		7AFEB1811AB2D20F005AAB3E = {
 			isa = PBXGroup;
 			children = (
+				7AFEB1941AB341D4005AAB3E /* quoridorStarterCode */,
 				7AFEB18C1AB2D20F005AAB3E /* Quoridor */,
 				7AFEB18B1AB2D20F005AAB3E /* Products */,
 			);
@@ -60,6 +76,29 @@
 				7AFEB18D1AB2D20F005AAB3E /* main.cpp */,
 			);
 			path = Quoridor;
+			sourceTree = "<group>";
+		};
+		7AFEB1941AB341D4005AAB3E /* quoridorStarterCode */ = {
+			isa = PBXGroup;
+			children = (
+				7AFEB1951AB341D4005AAB3E /* client */,
+				7AFEB1961AB341D4005AAB3E /* client.cpp */,
+				7AFEB1971AB341D4005AAB3E /* Game.py */,
+				7AFEB1981AB341D4005AAB3E /* Game.pyc */,
+				7AFEB1991AB341D4005AAB3E /* GameStack.py */,
+				7AFEB19A1AB341D4005AAB3E /* GameStack.pyc */,
+				7AFEB19B1AB341D4005AAB3E /* Graph.py */,
+				7AFEB19C1AB341D4005AAB3E /* Graph.pyc */,
+				7AFEB19D1AB341D4005AAB3E /* Helpers.py */,
+				7AFEB19E1AB341D4005AAB3E /* Helpers.pyc */,
+				7AFEB19F1AB341D4005AAB3E /* Player.py */,
+				7AFEB1A01AB341D4005AAB3E /* Player.pyc */,
+				7AFEB1A11AB341D4005AAB3E /* SpecialGraphs.py */,
+				7AFEB1A21AB341D4005AAB3E /* SpecialGraphs.pyc */,
+				7AFEB1A31AB341D4005AAB3E /* TkBoard.py */,
+			);
+			name = quoridorStarterCode;
+			path = Quoridor/quoridorStarterCode;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -232,6 +271,7 @@
 				7AFEB1931AB2D20F005AAB3E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
