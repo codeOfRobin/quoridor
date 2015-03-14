@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-
+using namespace std;
 struct player
 {
     int posX,posY; //reverse of encoding
@@ -52,7 +52,29 @@ struct gameData
         p2=player(length/2, breadth-1,numberOfWalls);
     }
 };
-gameData GD=gameData(2,4,3);
+gameData GD=gameData(100,100,10);
+
+int encode(int x, int y) {
+    int maxLengthBreadth = max(GD.length, GD.breadth);
+    bool isMaxLength = (maxLengthBreadth == GD.length);
+    if (isMaxLength) {
+        return x*GD.length + y;
+    }
+    else {
+        return x + y*GD.breadth;
+    }
+}
+
+pair<int, int> decode(int encodedPair) {
+    int maxLengthBreadth = max(GD.length, GD.breadth);
+    bool isMaxLength = (maxLengthBreadth == GD.length);
+    if (isMaxLength) {
+        return make_pair(encodedPair/GD.length, encodedPair % GD.length);
+    }
+    else {
+        return make_pair(encodedPair % GD.breadth, encodedPair/GD.breadth);
+    }
+}
 
 int main(int argc, const char * argv[])
 {
@@ -64,7 +86,15 @@ int main(int argc, const char * argv[])
     }
     memset(GD.graph,GD.length*GD.breadth*GD.length*GD.breadth,true);
     
-    std::cout<<GD.graph[0][20];
-    std::cout << "Hello, World!\n";
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            if (i != decode(encode(i, j)).first || j!= decode(encode(i,j)).second)
+            {
+                cout<<"Well, shit";
+            }
+            cout << encode(i, j) << endl;
+        }
+    }
+    
     return 0;
 }
