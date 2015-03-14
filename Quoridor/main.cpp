@@ -25,6 +25,8 @@ struct player
         posY=0;
     }
 };
+
+
 struct gameData
 {
     int length;
@@ -123,15 +125,21 @@ bool arePlayersAdjacent()
 }
 
 // Removes edges based on where the wall is positioned. (Center assumed here.)
-void insertWall(int orientation, int x, int y) {
+void insertWall(int playerIndex, int orientation, int x, int y) {
     x--; y--;
+    if (playerIndex == 1) {
+        GD.p1.wallsLeft--;
+    }
+    else {
+        GD.p2.wallsLeft--;
+    }
     // Orientation 1 is for horizontal wall, 2 for vertical.
     if (orientation == 1) {
         GD.graph[encode(x-1, y-1)][encode(x-1, y)] = false;
         GD.graph[encode(x-1, y)][encode(x-1, y-1)] = false;
         GD.graph[encode(x, y-1)][encode(x, y)] = false;
         GD.graph[encode(x, y)][encode(x, y-1)] = false;
-
+        
     }
     else if (orientation == 2) {
         GD.graph[encode(x-1, y-1)][encode(x, y-1)] = false;
@@ -143,6 +151,7 @@ void insertWall(int orientation, int x, int y) {
     
 }
 
+// Check for path existence needed.
 bool isValidWallMove(int orientation, int x, int y) {
     x--; y--;
     if (x < 1 || y < 1) {
@@ -171,17 +180,67 @@ bool isValidWallMove(int orientation, int x, int y) {
     return true;
 }
 
-void generateValidMoves() {
-    
+bool isValidPlayerMove(int playerIndex, int x, int y) {
+    player currentPlayer, otherPlayer;
+    if (playerIndex == 1) {
+        currentPlayer = GD.p1;
+        otherPlayer = GD.p2;
+    }
+    else {
+        currentPlayer = GD.p2;
+        otherPlayer = GD.p1;
+    }
+    int myX = currentPlayer.posX;
+    int myY = currentPlayer.posY;
+    int otherX = currentPlayer.posX;
+    int otherY = currentPlayer.posY;
+    if (x == otherX && y == otherY) {
+        return false;
+    }
+    bool adjacentPlayers = arePlayersAdjacent();
+    if (!adjacentPlayers) {
+        if (!isValidPoint(x, y) && !GD.graph[encode(x, y)][encode(myX, myY)]) {
+            return false;
+        }
+    }
+    else {
+        if (GD.graph[encode(myX, myY)][encode(x, y)]) {
+            return true;
+        }
+        else {
+            if (isValidPoint(myX+(2*(otherX-myX)), myY+(2*(otherY-myY))) && GD.graph[encode(myX+(2*(otherX-myX)), myY+(2*(otherY-myY)))][encode(otherX, otherY)]) {
+                if (x != (myX+(2*(otherX-myX))) || y != (myY+(2*(otherY-myY)))) {
+                    return false;
+                }
+            }
+            else {
+                int potentialX = otherX + (otherY - myY);
+                int potentialY = otherY + (otherX - myX);
+                if(isValidPoint(potentialX, potentialY)) {
+                    if (x == potentialX && y == potentialY) {
+                        return true;
+                    }
+                    potentialX = otherX - (otherY - myY);
+                    potentialY = otherY - (otherX - myX);
+                    if (x == potentialX && y == potentialY) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+
 }
 
+    
 int main(int argc, const char * argv[])
 {
     // insert code here...
     initializeGraph();
-    insertWall(1, 3, 3);
+    insertWall(1,1, 3, 3);
     cout << isValidWallMove(1, 5,4);
     
     return 0;
 }
-
+    
