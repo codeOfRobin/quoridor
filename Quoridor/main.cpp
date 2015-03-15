@@ -8,6 +8,8 @@
 
 #include <iostream>
 #include <vector>
+#include <stack>
+#include <list>
 using namespace std;
 struct player
 {
@@ -82,6 +84,54 @@ bool isValidPoint(int x, int y) {
         return false;
     }
     return true;
+}
+
+list<int> Edges(int i)
+{
+    list<int> edges;
+
+    for (int j=0; j<(GD.length*GD.breadth); j++)
+    {
+        if (GD.graph[i][j])
+        {
+            edges.push_back(j);
+        }
+    }
+    return edges;
+}
+
+//TODO:check for goal states here:
+bool isGoal(int point)
+{
+    return true;
+}
+bool isThereAPath(int player, int orientation, int x, int y)
+{
+    stack<int> S;
+    S.push(encode(x, y));
+    bool *discovered = new bool[GD.length*GD.breadth];
+    memset(discovered,GD.length*GD.breadth,false);
+    while (!S.empty())
+    {
+        int temp=S.top();
+        if (isGoal(temp))
+        {
+            return true;
+        }
+        S.pop();
+        if (discovered[temp]==false)
+        {
+            discovered[temp]=true;
+            list<int> neighbours=Edges(temp);
+            std::list<int>::const_iterator iterator;
+            for (iterator = neighbours.begin(); iterator != neighbours.end(); ++iterator) {
+                std::cout << *iterator;
+                S.push(*iterator);
+            }
+        }
+        
+    }
+    return false;
 }
 
 
