@@ -34,10 +34,10 @@ struct gameData
     int length;
     int breadth;
     int numberOfWalls;
-    bool **graph;
+//    bool **graph;
     player p1;
     player p2;
-    vector<pair<int, pair<int, int>>>  wallsPlacedSoFar;
+    vector<pair<int, pair<int, int>>>  wallsPlacedSoFar; // Orientation, pair of coordinates
     
     gameData(int n, int m, int k)
     {
@@ -57,16 +57,28 @@ struct gameData
         p1=player(0, 0, numberOfWalls);
         p2=player(0, 0, numberOfWalls);
     }
+    
+    gameData *parent;
 };
-gameData GD=gameData(9,9,10);
+
+struct move {
+    int type;
+    int row;
+    int column;
+};
+
+gameData theGame=gameData(9,9,10);
+
+
+
 
 int encode(int x, int y) {
-    int base = GD.length;
+    int base = theGame.length;
     return x + y*base;
 }
 
 pair<int, int> decode(int encodedPair) {
-    int base = GD.length;
+    int base = theGame.length;
     return make_pair(encodedPair % base, encodedPair/base);
 }
 
@@ -77,16 +89,16 @@ bool isValidPoint(int x, int y) {
     if (y < 0) {
         return false;
     }
-    if (x >= GD.length) {
+    if (x >= theGame.length) {
         return false;
     }
-    if (y >= GD.breadth) {
+    if (y >= theGame.breadth) {
         return false;
     }
     return true;
 }
 
-list<int> Edges(int i)
+list<int> Edges(int i, gameData GD)
 {
     list<int> edges;
 
@@ -101,11 +113,14 @@ list<int> Edges(int i)
 }
 
 //TODO:check for goal states here:
-bool isGoal(int point)
+bool isGoal(int encodedPair, int player)
 {
-    return true;
+    pair<int, int> decodedPair = decode(encodedPair);
+    int posY = decodedPair.second;
+    return (posY == ((theGame.length-1)*(2-player)));
 }
-bool isThereAPath(int player, int orientation, int x, int y)
+
+bool isThereAPath(int player, int x, int y, gameData GD)
 {
     stack<int> S;
     S.push(encode(x, y));
@@ -114,7 +129,7 @@ bool isThereAPath(int player, int orientation, int x, int y)
     while (!S.empty())
     {
         int temp=S.top();
-        if (isGoal(temp))
+        if (isGoal(temp, player))
         {
             return true;
         }
@@ -122,7 +137,7 @@ bool isThereAPath(int player, int orientation, int x, int y)
         if (discovered[temp]==false)
         {
             discovered[temp]=true;
-            list<int> neighbours=Edges(temp);
+            list<int> neighbours=Edges(temp, GD);
             std::list<int>::const_iterator iterator;
             for (iterator = neighbours.begin(); iterator != neighbours.end(); ++iterator) {
                 std::cout << *iterator;
@@ -137,37 +152,37 @@ bool isThereAPath(int player, int orientation, int x, int y)
 
 void initializeGraph()
 {
-    GD.graph=new bool*[GD.length*GD.breadth+1];
-    for(int i=0;i<=GD.length*GD.breadth;i++)
+    theGame.graph=new bool*[theGame.length*theGame.breadth+1];
+    for(int i=0;i<=theGame.length*theGame.breadth;i++)
     {
-        GD.graph[i]=new bool[GD.length*GD.breadth+1];
+        theGame.graph[i]=new bool[theGame.length*theGame.breadth+1];
     }
-    memset(GD.graph,GD.length*GD.breadth*GD.length*GD.breadth,false);
-    for (int i = 0; i < GD.length; i++) {
-        for (int j = 0; j < GD.breadth; j++) {
+    memset(theGame.graph,theGame.length*theGame.breadth*theGame.length*theGame.breadth,false);
+    for (int i = 0; i < theGame.length; i++) {
+        for (int j = 0; j < theGame.breadth; j++) {
             int encodedPoint = encode(i,j);
             if (isValidPoint(i+1, j)) {
-                GD.graph[encodedPoint][encode(i+1, j)] = true;
-                GD.graph[encode(i+1, j)][encodedPoint] = true;
+                theGame.graph[encodedPoint][encode(i+1, j)] = true;
+                theGame.graph[encode(i+1, j)][encodedPoint] = true;
             }
             if (isValidPoint(i, j+1)) {
-                GD.graph[encodedPoint][encode(i, j+1)] = true;
-                GD.graph[encode(i, j+1)][encodedPoint] = true;
+                theGame.graph[encodedPoint][encode(i, j+1)] = true;
+                theGame.graph[encode(i, j+1)][encodedPoint] = true;
             }
             if (isValidPoint(i-1, j)) {
-                GD.graph[encodedPoint][encode(i-1, j)] = true;
-                GD.graph[encode(i-1, j)][encodedPoint] = true;
+                theGame.graph[encodedPoint][encode(i-1, j)] = true;
+                theGame.graph[encode(i-1, j)][encodedPoint] = true;
             }
             if (isValidPoint(i, j-1)) {
-                GD.graph[encodedPoint][encode(i, j-1)] = true;
-                GD.graph[encode(i, j-1)][encodedPoint] = true;
+                theGame.graph[encodedPoint][encode(i, j-1)] = true;
+                theGame.graph[encode(i, j-1)][encodedPoint] = true;
             }
         }
     }
 }
 
 
-bool arePlayersAdjacent()
+bool arePlayersAdjacent(gameData GD)
 {
     int p1Pos = encode(GD.p1.posX, GD.p1.posY);
     int p2Pos = encode(GD.p2.posX, GD.p2.posY);
@@ -175,7 +190,7 @@ bool arePlayersAdjacent()
 }
 
 // Removes edges based on where the wall is positioned. (Center assumed here.)
-void insertWall(int playerIndex, int orientation, int x, int y) {
+void insertWall(int playerIndex, int orientation, int x, int y, gameData GD) {
     x--; y--;
     if (playerIndex == 1) {
         GD.p1.wallsLeft--;
@@ -202,7 +217,7 @@ void insertWall(int playerIndex, int orientation, int x, int y) {
 }
 
 // Check for path existence needed.
-bool isValidWallMove(int orientation, int x, int y) {
+bool isValidWallMove(int orientation, int x, int y, gameData GD) {
     x--; y--;
     if (x < 1 || y < 1) {
         return false;
@@ -230,7 +245,7 @@ bool isValidWallMove(int orientation, int x, int y) {
     return true;
 }
 
-bool isValidPlayerMove(int playerIndex, int x, int y) {
+bool isValidPlayerMove(int playerIndex, int x, int y, gameData GD) {
     player currentPlayer, otherPlayer;
     if (playerIndex == 1) {
         currentPlayer = GD.p1;
@@ -247,7 +262,7 @@ bool isValidPlayerMove(int playerIndex, int x, int y) {
     if (x == otherX && y == otherY) {
         return false;
     }
-    bool adjacentPlayers = arePlayersAdjacent();
+    bool adjacentPlayers = arePlayersAdjacent(GD);
     if (!adjacentPlayers) {
         if (!isValidPoint(x, y) && !GD.graph[encode(x, y)][encode(myX, myY)]) {
             return false;
@@ -288,9 +303,9 @@ int main(int argc, const char * argv[])
 {
     // insert code here...
     initializeGraph();
-    insertWall(1,1, 3, 3);
-    cout << isValidWallMove(1, 5,4);
-    
+//    insertWall(1,1, 3, 3);
+//    cout << isValidWallMove(1, 5,4);
+    cout << isGoal(encode(2, 6), 2);
     return 0;
 }
     
