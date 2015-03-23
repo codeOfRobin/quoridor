@@ -46,20 +46,24 @@ struct qMove {
 	}
 };
 
+struct position {
+    int row;
+    int col;
+};
+
 struct player {
-	int row;
-	int col;
+    position pos;
 	int wallsLeft;
 	
 	player(int initialRow, int initialCol, int totalWalls) {
-		row = initialRow;
-		col = initialCol;
+		pos.row = initialRow;
+		pos.col = initialCol;
 		wallsLeft = totalWalls;
 	}
 	
 	player() {
-		row = 9;
-		col = 9;
+		pos.row = 9;
+		pos.col = 9;
 		wallsLeft = 10;
 	}
 };
@@ -86,7 +90,7 @@ struct gameState {
 
 //function definitions
 float evalFunction(gameState);
-float maxValue(gameState GD, float alpha, float beta);
+float maxValue(gameState gameData, float alpha, float beta);
 
 
 //minimax stuff
@@ -98,26 +102,31 @@ vector<qMove> validMoves(gameState currentState) {
     return currentMoves;
 }
 
+bool isValidPlayerMove(gameState currentState, qMove myMove) {
+    position currentPos = currentState.players[currentState.currentPlayer].pos;
+    position movedPosition;
+    movedPosition.row = myMove.row;
+    movedPosition.col = myMove.col;
+}
 
 
 
-
-qMove alphaBetaSearch(gameState GD)
+qMove alphaBetaSearch(gameState gameData)
 {
-    float v=maxValue(GD,-infinity,infinity);
-    vector<qMove> allMovesPossible=validMoves(GD);
+    float v=maxValue(gameData,-infinity,infinity);
+    vector<qMove> allMovesPossible=validMoves(gameData);
     return allMovesPossible[0];
 }
 
-float maxValue(gameState GD, float alpha, float beta)
+float maxValue(gameState gameData, float alpha, float beta)
 {
-    if (GD.children.size()==0)
+    if (gameData.children.size()==0)
     {
-        return evalFunction(GD);
+        return evalFunction(gameData);
     }
     float v=-infinity;
     
-    vector<qMove> actions=validMoves(GD);
+    vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++)
     {
         //        v=max(const _Tp &__a, <#const _Tp &__b#>, <#_Compare __comp#>)
@@ -133,14 +142,14 @@ float maxValue(gameState GD, float alpha, float beta)
 }
 
 
-float minValue(gameState GD, float alpha, float beta)
+float minValue(gameState gameData, float alpha, float beta)
 {
-    if (GD.children.size()==0)
+    if (gameData.children.size()==0)
     {
-        return evalFunction(GD);
+        return evalFunction(gameData);
     }
     float v=infinity;
-    vector<qMove> actions=validMoves(GD);
+    vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++)
     {
         //        v=max(<#const _Tp &__a#>, <#const _Tp &__b#>, <#_Compare __comp#>)
@@ -160,30 +169,30 @@ float minValue(gameState GD, float alpha, float beta)
 //end minimax stuff
 
 
-float evalFunction(gameState GD)
+float evalFunction(gameState gameData)
 {
     return 4.2;
 }
 
 
 
-bool arePlayersAdjacent(gameState currentState) {
-	bool potentiallyAdjacent = (abs(currentState.players[0].row - currentState.players[1].row) + abs(currentState.players[0].col - currentState.players[1].col) == 1);
+bool arePositionsAdjacent(gameState currentState, position pos0, position pos1) {
+	bool potentiallyAdjacent = (abs(pos0.row - pos1.row) + abs(pos0.col - pos1.col) == 1);
 	if (potentiallyAdjacent) {
-		int orientationRequired = abs(currentState.players[0].col - currentState.players[1].col);
+		int orientationRequired = abs(pos0.col - pos1.col);
 		for(std::vector<int>::size_type i = 0; i != currentState.wallsPlacedSoFar.size(); i++) {
 			wall currentWall = currentState.wallsPlacedSoFar[i];
 			if (currentWall.orientation == orientationRequired) {
 				if (orientationRequired == 0) {
-					int potentialRowCenter = (currentState.players[0].row + currentState.players[1].row + 1)/2;
-					int colDifference = currentWall.colCenter - currentState.players[0].col;
+					int potentialRowCenter = (pos0.row + pos1.row + 1)/2;
+					int colDifference = currentWall.colCenter - pos0.col;
 					if ((currentWall.rowCenter == potentialRowCenter) && (colDifference >= 0) && (colDifference <=  1)) {
 						return false;
 					}
 				}
 				if (orientationRequired == 1) {
-					int potentialColCenter = (currentState.players[0].col + currentState.players[1].col + 1)/2;
-					int rowDifference = currentWall.rowCenter - currentState.players[0].row;
+					int potentialColCenter = (pos0.col + pos1.col + 1)/2;
+					int rowDifference = currentWall.rowCenter - pos0.row;
 					if ((currentWall.colCenter == potentialColCenter) && (rowDifference >= 0) && (rowDifference <= 1)) {
 						return false;
 					}
@@ -194,14 +203,18 @@ bool arePlayersAdjacent(gameState currentState) {
 	return potentiallyAdjacent;
 }
 
-
+bool arePlayersAdjacent(gameState currentState) {
+    position pos0 = currentState.players[0].pos;
+    position pos1 = currentState.players[1].pos;
+    return arePositionsAdjacent(currentState, pos0, pos1);
+}
 
 
 gameState moveState(gameState currentState, qMove myMove) {
 	gameState afterMoveState = currentState;
 	if (myMove.type == 0) {
-		afterMoveState.players[currentState.currentPlayer].row = myMove.row;
-		afterMoveState.players[currentState.currentPlayer].col = myMove.col;
+		afterMoveState.players[currentState.currentPlayer].pos.row = myMove.row;
+		afterMoveState.players[currentState.currentPlayer].pos.col = myMove.col;
 	}
 	else if (myMove.type == 1 || myMove.type == 2) {
 		int orientation = myMove.type - 1;
