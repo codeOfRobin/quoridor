@@ -145,6 +145,27 @@ bool isValidPlayerMove(gameState currentState, qMove playerMove) {
 	return false;
 }
 
+bool isValidWallMove(gameState currentState, qMove wallMove) {
+	for (int i=0; i<currentState.wallsPlacedSoFar.size(); i++) {
+		int currentOrientation=currentState.wallsPlacedSoFar[i].orientation;
+		int currentRow=currentState.wallsPlacedSoFar[i].rowCenter;
+		int currentColumn=currentState.wallsPlacedSoFar[i].colCenter;
+		if (currentOrientation!=wallMove.type-1 && currentRow==wallMove.row && currentColumn==wallMove.col) {
+			return false;
+		}
+		else {
+			if (currentOrientation==0 && abs(currentColumn-wallMove.col)<=1 && currentRow == wallMove.row) {
+				//horizontal
+				return false;
+			}
+			else if(currentOrientation==1 && abs(currentRow-wallMove.row)<=1 && currentColumn == wallMove.col) {
+				//vertical
+				return false;
+			}
+		}
+	}
+	return true;
+}
 
 
 qMove alphaBetaSearch(gameState gameData)
