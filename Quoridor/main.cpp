@@ -6,13 +6,21 @@
 //  Copyright (c) 2015 BatmanAndRobin. All rights reserved.
 //
 
+
+//TODO:
+/*
+DFS-can player reach goal state
+minimax
+*/
 #include <iostream>
 #include <vector>
 
 #define pb push_back
 #define mp make_pair
-
+#define infinity 999999
 using namespace std;
+
+
 
 struct wall {
 	int orientation;
@@ -61,6 +69,7 @@ struct gameState {
 	int m; // Breath
 	int currentPlayer;
 	player players[2];
+    vector<gameState> children;
 	vector<wall>  wallsPlacedSoFar; // (Orientation, (Row Centre, Col Centre))
 	
 	gameState(int length, int breadth, int totalWalls)
@@ -73,6 +82,90 @@ struct gameState {
 	}
 	
 };
+
+
+//function definitions
+float evalFunction(gameState);
+float maxValue(gameState GD, float alpha, float beta);
+
+
+//minimax stuff
+
+
+vector<qMove> validMoves(gameState currentState) {
+    vector<qMove> currentMoves;
+    
+    return currentMoves;
+}
+
+
+
+
+
+qMove alphaBetaSearch(gameState GD)
+{
+    float v=maxValue(GD,-infinity,infinity);
+    vector<qMove> allMovesPossible=validMoves(GD);
+    return allMovesPossible[0];
+}
+
+float maxValue(gameState GD, float alpha, float beta)
+{
+    if (GD.children.size()==0)
+    {
+        return evalFunction(GD);
+    }
+    float v=-infinity;
+    
+    vector<qMove> actions=validMoves(GD);
+    for (int i=0; i<actions.size(); i++)
+    {
+        //        v=max(const _Tp &__a, <#const _Tp &__b#>, <#_Compare __comp#>)
+        if (v>=beta)
+        {
+            return v;
+        }
+        
+        alpha=max(alpha, v);
+    }
+    
+    return v;
+}
+
+
+float minValue(gameState GD, float alpha, float beta)
+{
+    if (GD.children.size()==0)
+    {
+        return evalFunction(GD);
+    }
+    float v=infinity;
+    vector<qMove> actions=validMoves(GD);
+    for (int i=0; i<actions.size(); i++)
+    {
+        //        v=max(<#const _Tp &__a#>, <#const _Tp &__b#>, <#_Compare __comp#>)
+        if (v<=alpha)
+        {
+            return v;
+        }
+        
+        beta=min(beta,v);
+    }
+    
+    return v;
+
+}
+
+
+//end minimax stuff
+
+
+float evalFunction(gameState GD)
+{
+    return 4.2;
+}
+
+
 
 bool arePlayersAdjacent(gameState currentState) {
 	bool potentiallyAdjacent = (abs(currentState.players[0].row - currentState.players[1].row) + abs(currentState.players[0].col - currentState.players[1].col) == 1);
@@ -122,11 +215,6 @@ gameState moveState(gameState currentState, qMove myMove) {
 	return afterMoveState;
 }
 
-vector<qMove> validMoves(gameState currentState) {
-	vector<qMove> currentMoves;
-	
-	return currentMoves;
-}
 
 
 
