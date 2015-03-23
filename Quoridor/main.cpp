@@ -74,7 +74,7 @@ struct gameState {
 	int currentPlayer;
 	player players[2];
     vector<gameState> children;
-	vector<wall>  wallsPlacedSoFar; // (Orientation, (Row Centre, Col Centre))
+	vector<wall>  wallsPlacedSoFar; // (Orientation, Row Centre, Col Centre) -> Orientation 0 for horizontal, 1 for vertical
 	
 	gameState(int length, int breadth, int totalWalls)
 	{
@@ -91,6 +91,8 @@ struct gameState {
 //function definitions
 float evalFunction(gameState);
 float maxValue(gameState gameData, float alpha, float beta);
+bool arePositionsAdjacent(gameState currentState, position pos0, position pos1);
+bool arePlayersAdjacent(gameState currentState);
 
 
 //minimax stuff
@@ -102,11 +104,45 @@ vector<qMove> validMoves(gameState currentState) {
     return currentMoves;
 }
 
-bool isValidPlayerMove(gameState currentState, qMove myMove) {
+bool isValidPlayerMove(gameState currentState, qMove playerMove) {
     position currentPos = currentState.players[currentState.currentPlayer].pos;
-    position movedPosition;
-    movedPosition.row = myMove.row;
-    movedPosition.col = myMove.col;
+	position otherPos = currentState.players[1-currentState.currentPlayer].pos;
+    position movedPos;
+    movedPos.row = playerMove.row;
+    movedPos.col = playerMove.col;
+	if (currentPos.row == otherPos.row && currentPos.col == currentPos.row) {
+		return false;
+	}
+	if (arePositionsAdjacent(currentState, currentPos, movedPos)) {
+		if (movedPos.row == otherPos.row && movedPos.col == otherPos.col) {
+			if (otherPos.row == ((1-currentState.currentPlayer)*(currentState.n - 1) + 1)) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (arePlayersAdjacent(currentState)) {
+		if (arePositionsAdjacent(currentState, otherPos, movedPos)) {
+			position priorityPos;
+			priorityPos.row = currentPos.row + 2*(otherPos.row - currentPos.row);
+			priorityPos.col = currentPos.col + 2*(otherPos.col - currentPos.col);
+			if (arePositionsAdjacent(currentState, otherPos, priorityPos)) {
+				if (priorityPos.row == movedPos.row && priorityPos.col == movedPos.col) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 
