@@ -20,7 +20,7 @@ Create moves, add to minimax, integrate.
 #define mp make_pair
 #define infinity FLT_MAX
 using namespace std;
-
+int ourPlayer;
 
 struct wall {
 	int orientation;
@@ -101,15 +101,14 @@ struct gameState {
 		currentPlayer = 0;
 		n = length;
 		m = breadth;
-		this->players[0] = player(1, m/2, totalWalls);
-		this->players[1] = player(n, m/2,totalWalls);
+		this->players[0] = player(1, (m+1)/2, totalWalls);
+		this->players[1] = player(n, (m+1)/2,totalWalls);
 	}
 	
 };
 
 
 //function definitions
-float evalFunction(gameState);
 moveEval maxValue(gameState gameData, float alpha, float beta);
 bool arePositionsAdjacent(gameState currentState, position pos0, position pos1);
 bool arePlayersAdjacent(gameState currentState);
@@ -117,7 +116,8 @@ bool isValidPosition(position pos, gameState currentState);
 vector<position> neighbours(position pos, gameState currentState);
 bool isValidMove(gameState currentState, qMove myMove);
 gameState moveState(gameState currentState, qMove myMove);
-moveEval minValue(gameState gameData, float alpha, float beta);
+moveEval minValue(gameState gameData, float alpha, float beta, int depth);
+moveEval maxValue(gameState gameData, float alpha, float beta, int depth);
 
 //minimax stuff
 
@@ -144,18 +144,20 @@ vector<qMove> validMoves(gameState currentState) {
 			currentMoves.pb(potentialMove);
 		}
 	}
-	for (int i = 2; i <= currentState.n; i++) {
-		for (int j = 2; j <= currentState.m; j++) {
-			qMove potentialMove1(1, i, j);
-			if (isValidMove(currentState, potentialMove1)) {
-				currentMoves.pb(potentialMove1);
-			}
-			qMove potentialMove2(2, i, j);
-			if (isValidMove(currentState, potentialMove2)) {
-				currentMoves.pb(potentialMove2);
-			}
-		}
-	}
+    if (currentState.players[currentPlayerIndex].wallsLeft > 0) {
+        for (int i = 2; i <= currentState.n; i++) {
+            for (int j = 2; j <= currentState.m; j++) {
+                qMove potentialMove1(1, i, j);
+                if (isValidMove(currentState, potentialMove1)) {
+                    currentMoves.pb(potentialMove1);
+                }
+                qMove potentialMove2(2, i, j);
+                if (isValidMove(currentState, potentialMove2)) {
+                    currentMoves.pb(potentialMove2);
+                }
+            }
+        }
+    }
     return currentMoves;
 }
 
@@ -195,29 +197,30 @@ bool isValidPosition(position pos, gameState currentState) {
     return (pos.row >= 1 && pos.col >= 1 && pos.row <= currentState.n && pos.col <= currentState.m);
 }
 
-bool canPlayerReachGoalState(gameState currentState, int playerIndex) {
+int canPlayerReachGoalState(gameState currentState, int playerIndex) {
     position pos = currentState.players[playerIndex].pos;
     queue<position> visited;
     visited.push(pos);
-    bool discovered[currentState.n + 1][currentState.m + 1];
-    memset(discovered, (int)sizeof(discovered), false);
-    discovered[pos.row][pos.col] = true;
+    int distance[currentState.n + 1][currentState.m + 1];
+    memset(distance, -1, sizeof(distance));
+    distance[pos.row][pos.col] = 0;
     while (!visited.empty()) {
         position currentPos = visited.front();
         visited.pop();
         vector<position> currentNeighbours;
         currentNeighbours = neighbours(currentPos, currentState);
         for (int i = 0; i < currentNeighbours.size(); i++) {
-            if (!discovered[currentNeighbours[i].row][currentNeighbours[i].col]) {
+            if (distance[currentNeighbours[i].row][currentNeighbours[i].col] == -1) {
                 if (isGoalState(currentState, currentNeighbours[i], playerIndex)) {
-                    return true;
+                    distance[currentNeighbours[i].row][currentNeighbours[i].col] = distance[currentPos.row][currentPos.col] + 1;
+                    return distance[currentNeighbours[i].row][currentNeighbours[i].col];
                 }
                 visited.push(currentNeighbours[i]);
-                discovered[currentNeighbours[i].row][currentNeighbours[i].col] = true;
+                distance[currentNeighbours[i].row][currentNeighbours[i].col] = distance[currentPos.row][currentPos.col] + 1;
             }
         }
     }
-    return false;
+    return -1;
 }
 
 bool isValidPlayerMove(gameState currentState, qMove playerMove) {
@@ -266,7 +269,8 @@ bool isValidWallMove(gameState currentState, qMove wallMove) {
 		int currentOrientation=currentState.wallsPlacedSoFar[i].orientation;
 		int currentRow=currentState.wallsPlacedSoFar[i].rowCenter;
 		int currentColumn=currentState.wallsPlacedSoFar[i].colCenter;
-		if (currentOrientation!=wallMove.type-1 && currentRow==wallMove.row && currentColumn==wallMove.col) {
+
+        if (currentOrientation!=wallMove.type-1 && currentRow==wallMove.row && currentColumn==wallMove.col) {
 			return false;
 		}
 		else {
@@ -301,21 +305,21 @@ bool isValidMove(gameState currentState, qMove myMove) {
     return false;
 }
 
-qMove alphaBetaSearch(gameState gameData) {
-    moveEval me=maxValue(gameData,-infinity,infinity);
+qMove alphaBetaSearch(gameState gameData, int depth) {
+    moveEval me=maxValue(gameData,-infinity,infinity, depth);
     return me.move;
 }
 
-moveEval maxValue(gameState gameData, float alpha, float beta) {
-    if (gameData.children.size()==0) {
-        return moveEval(evalFunction(gameData));
+moveEval maxValue(gameState gameData, float alpha, float beta, int depth) {
+    if ((isGoalState(gameData, gameData.players[0].pos ,0) && isGoalState(gameData, gameData.players[0].pos, 1)) || depth==0) {
+        return moveEval(infinity);
     }
     
     moveEval mev = moveEval(-infinity);
     
     vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++) {
-        mev.eval=max(mev.eval,minValue(moveState(gameData, actions[i]), alpha, beta).eval);
+        mev.eval=max(mev.eval,minValue(moveState(gameData, actions[i]), alpha, beta, depth-1).eval);
         if (mev.eval>=beta) {
             return moveEval(actions[i], mev.eval);
         }
@@ -326,14 +330,14 @@ moveEval maxValue(gameState gameData, float alpha, float beta) {
 }
 
 
-moveEval minValue(gameState gameData, float alpha, float beta) {
-    if (gameData.children.size()==0) {
-        return moveEval(evalFunction(gameData));
+moveEval minValue(gameState gameData, float alpha, float beta, int depth) {
+    if ((isGoalState(gameData, gameData.players[0].pos ,0) && isGoalState(gameData, gameData.players[0].pos, 1)) || depth==0) {
+        return moveEval(infinity);
     }
     moveEval mev(infinity);
     vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++) {
-        mev.eval=min(mev.eval,maxValue(moveState(gameData, actions[i]), alpha, beta).eval);
+        mev.eval=min(mev.eval,maxValue(moveState(gameData, actions[i]), alpha, beta,depth-1).eval);
         if (mev.eval<=alpha) {
             return moveEval(actions[i], mev.eval);
         }
@@ -349,9 +353,6 @@ moveEval minValue(gameState gameData, float alpha, float beta) {
 //end minimax stuff
 
 
-float evalFunction(gameState gameData) {
-    return 4.2;
-}
 
 
 
@@ -412,18 +413,10 @@ int main(int argc, const char * argv[]) {
 	// insert code here...
     
     gameState GS(9,9,8);
-    GS.players[0].pos.row=8;
-    GS.players[0].pos.col=8;
-    GS.players[1].pos.row=9;
-    GS.players[1].pos.col=8;
-    vector<qMove> valid=validMoves(GS);
-    vector<qMove> type0;
-    for (int i=0; i<valid.size(); i++)
-    {
-        if (valid[i].type==0)
-        {
-            type0.pb(valid[i]);
-        }
-    }
+//    GS = moveState(GS, qMove(1, 5, 4));
+//    GS = moveState(GS, qMove(1, 5, 2));
+    GS = moveState(GS , qMove(1, 5, 6));
+//    GS = moveState(GS, qMove(1, 5, 8));
+    cout << canPlayerReachGoalState(GS, 0);
 	return 0;
 }
