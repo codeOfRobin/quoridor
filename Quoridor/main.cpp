@@ -9,17 +9,16 @@
 
 //TODO:
 /*
-DFS-can player reach goal state
-minimax
+
+Create moves, add to minimax, integrate.
 */
 #include <iostream>
 #include <vector>
-
+#include <queue>
 #define pb push_back
 #define mp make_pair
 #define infinity 999999
 using namespace std;
-
 
 
 struct wall {
@@ -93,6 +92,7 @@ float evalFunction(gameState);
 float maxValue(gameState gameData, float alpha, float beta);
 bool arePositionsAdjacent(gameState currentState, position pos0, position pos1);
 bool arePlayersAdjacent(gameState currentState);
+bool isValidPosition(position pos, gameState currentState);
 
 
 //minimax stuff
@@ -102,6 +102,67 @@ vector<qMove> validMoves(gameState currentState) {
     vector<qMove> currentMoves;
     
     return currentMoves;
+}
+
+bool isGoalState(gameState currentState, position pos, int playerIndex) {
+    return ((pos.row) == ((1-playerIndex)*(currentState.n - 1) + 1));
+}
+
+vector<position> neighbours(position pos, gameState currentState) {
+    int currentRow = pos.row;
+    int currentCol = pos.col;
+    position posUp, posDn, posLe, posRi;
+    posUp.row = currentRow - 1;
+    posUp.col = currentCol;
+    posDn.row = currentRow + 1;
+    posDn.col = currentCol;
+    posRi.row = currentRow;
+    posRi.col = currentCol + 1;
+    posLe.row = currentRow;
+    posLe.col = currentCol - 1;
+    vector<position> neighbourPositions;
+    if (isValidPosition(posUp, currentState) && arePositionsAdjacent(currentState, posUp, pos)) {
+        neighbourPositions.pb(posUp);
+    }
+    if (isValidPosition(posDn, currentState) && arePositionsAdjacent(currentState, posDn, pos)) {
+        neighbourPositions.pb(posDn);
+    }
+    if (isValidPosition(posRi, currentState) && arePositionsAdjacent(currentState, posRi, pos)) {
+        neighbourPositions.pb(posRi);
+    }
+    if (isValidPosition(posLe, currentState) && arePositionsAdjacent(currentState, posLe, pos)) {
+        neighbourPositions.pb(posLe);
+    }
+    return neighbourPositions;
+}
+
+bool isValidPosition(position pos, gameState currentState) {
+    return (pos.row >= 1 && pos.col >= 1 && pos.row <= currentState.n && pos.col <= currentState.m);
+}
+
+bool canPlayerReachGoalState(gameState currentState, int playerIndex) {
+    position pos = currentState.players[playerIndex].pos;
+    queue<position> visited;
+    visited.push(pos);
+    bool discovered[currentState.n + 1][currentState.m + 1];
+    memset(discovered, (int)sizeof(discovered), false);
+    discovered[pos.row][pos.col] = true;
+    while (!visited.empty()) {
+        position currentPos = visited.front();
+        visited.pop();
+        vector<position> currentNeighbours;
+        currentNeighbours = neighbours(currentPos, currentState);
+        for (int i = 0; i < currentNeighbours.size(); i++) {
+            if (!discovered[currentNeighbours[i].row][currentNeighbours[i].col]) {
+                if (isGoalState(currentState, currentNeighbours[i], playerIndex)) {
+                    return true;
+                }
+                visited.push(currentNeighbours[i]);
+                discovered[currentNeighbours[i].row][currentNeighbours[i].col] = true;
+            }
+        }
+    }
+    return false;
 }
 
 bool isValidPlayerMove(gameState currentState, qMove playerMove) {
@@ -115,7 +176,7 @@ bool isValidPlayerMove(gameState currentState, qMove playerMove) {
 	}
 	if (arePositionsAdjacent(currentState, currentPos, movedPos)) {
 		if (movedPos.row == otherPos.row && movedPos.col == otherPos.col) {
-			if (otherPos.row == ((1-currentState.currentPlayer)*(currentState.n - 1) + 1)) {
+			if (isGoalState(currentState, otherPos, (1-currentState.currentPlayer))) {
 				return true;
 			}
 			else {
@@ -167,28 +228,40 @@ bool isValidWallMove(gameState currentState, qMove wallMove) {
 	return true;
 }
 
+bool isValidMove(gameState currentState, qMove myMove) {
+    int type = myMove.type;
+    if (type == 1) {
+        if (myMove.row >= 1 && myMove.col >= 1 && myMove.row <= currentState.n && myMove.col <= currentState.m) {
+            return isValidPlayerMove(currentState, myMove);
+        }
+        else {
+            return false;
+        }
+    }
+    if (type == 2 || type == 3) {
+        if (myMove.row >= 2 && myMove.col >= 2 && myMove.row <= currentState.n && myMove.col <= currentState.m) {
+            return isValidWallMove(currentState, myMove);
+        }
+    }
+    return false;
+}
 
-qMove alphaBetaSearch(gameState gameData)
-{
+qMove alphaBetaSearch(gameState gameData) {
     float v=maxValue(gameData,-infinity,infinity);
     vector<qMove> allMovesPossible=validMoves(gameData);
     return allMovesPossible[0];
 }
 
-float maxValue(gameState gameData, float alpha, float beta)
-{
-    if (gameData.children.size()==0)
-    {
+float maxValue(gameState gameData, float alpha, float beta) {
+    if (gameData.children.size()==0) {
         return evalFunction(gameData);
     }
     float v=-infinity;
     
     vector<qMove> actions=validMoves(gameData);
-    for (int i=0; i<actions.size(); i++)
-    {
+    for (int i=0; i<actions.size(); i++) {
         //        v=max(const _Tp &__a, <#const _Tp &__b#>, <#_Compare __comp#>)
-        if (v>=beta)
-        {
+        if (v>=beta) {
             return v;
         }
         
@@ -199,19 +272,15 @@ float maxValue(gameState gameData, float alpha, float beta)
 }
 
 
-float minValue(gameState gameData, float alpha, float beta)
-{
-    if (gameData.children.size()==0)
-    {
+float minValue(gameState gameData, float alpha, float beta) {
+    if (gameData.children.size()==0) {
         return evalFunction(gameData);
     }
     float v=infinity;
     vector<qMove> actions=validMoves(gameData);
-    for (int i=0; i<actions.size(); i++)
-    {
+    for (int i=0; i<actions.size(); i++) {
         //        v=max(<#const _Tp &__a#>, <#const _Tp &__b#>, <#_Compare __comp#>)
-        if (v<=alpha)
-        {
+        if (v<=alpha) {
             return v;
         }
         
@@ -226,8 +295,7 @@ float minValue(gameState gameData, float alpha, float beta)
 //end minimax stuff
 
 
-float evalFunction(gameState gameData)
-{
+float evalFunction(gameState gameData) {
     return 4.2;
 }
 
