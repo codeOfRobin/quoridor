@@ -1,17 +1,15 @@
-//
-//  main.cpp
-//  quoridorPart2
-//
-//  Created by Robin Malhotra on 17/03/15.
-//  Copyright (c) 2015 BatmanAndRobin. All rights reserved.
-//
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <arpa/inet.h>
+//#include <bits/stdc++.h>
 
-
-//TODO:
-/*
-
-Create moves, add to minimax, integrate.
-*/
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -23,27 +21,27 @@ using namespace std;
 int ourPlayer;
 
 struct wall {
-	int orientation;
-	int rowCenter;
-	int colCenter;
-	
-	wall(int o, int r, int c) {
-		orientation = o;
-		rowCenter = r;
-		colCenter = c;
-	}
+    int orientation;
+    int rowCenter;
+    int colCenter;
+    
+    wall(int o, int r, int c) {
+        orientation = o;
+        rowCenter = r;
+        colCenter = c;
+    }
 };
 
 struct qMove {
-	int type;
-	int row;
-	int col;
-	
-	qMove(int t, int r, int c) {
-		type = t;
-		row = r;
-		col = c;
-	}
+    int type;
+    int row;
+    int col;
+    
+    qMove(int t, int r, int c) {
+        type = t;
+        row = r;
+        col = c;
+    }
     
     qMove() {
         type = -1;
@@ -73,38 +71,39 @@ struct position {
 
 struct player {
     position pos;
-	int wallsLeft;
-	
-	player(int initialRow, int initialCol, int totalWalls) {
-		pos.row = initialRow;
-		pos.col = initialCol;
-		wallsLeft = totalWalls;
-	}
-	
-	player() {
-		pos.row = 9;
-		pos.col = 9;
-		wallsLeft = 10;
-	}
+    int wallsLeft;
+    
+    player(int initialRow, int initialCol, int totalWalls) {
+        pos.row = initialRow;
+        pos.col = initialCol;
+        wallsLeft = totalWalls;
+    }
+    
+    player() {
+        pos.row = 9;
+        pos.col = 9;
+        wallsLeft = 10;
+    }
 };
 
 struct gameState {
-	int n; // Length
-	int m; // Breath
-	int currentPlayer;
-	player players[2];
+    int n; // Length
+    int m; // Breath
+    int currentPlayer;
+    player players[2];
     vector<gameState> children;
-	vector<wall>  wallsPlacedSoFar; // (Orientation, Row Centre, Col Centre) -> Orientation 0 for horizontal, 1 for vertical
-	
-	gameState(int length, int breadth, int totalWalls)
-	{
-		currentPlayer = 0;
-		n = length;
-		m = breadth;
-		this->players[0] = player(1, (m+1)/2, totalWalls);
-		this->players[1] = player(n, (m+1)/2,totalWalls);
-	}
-	
+    vector<wall>  wallsPlacedSoFar; // (Orientation, Row Centre, Col Centre) -> Orientation 0 for horizontal, 1 for vertical
+    
+    gameState(int length, int breadth, int totalWalls)
+    {
+        currentPlayer = 0;
+        n = length;
+        m = breadth;
+        this->players[0] = player(1, (m+1)/2, totalWalls);
+        this->players[1] = player(n, (m+1)/2,totalWalls);
+        cout<<"robin " <<totalWalls;
+    }
+    
 };
 
 
@@ -123,27 +122,27 @@ moveEval maxValue(gameState gameData, float alpha, float beta, int depth);
 
 vector<qMove> validMoves(gameState currentState) {
     vector<qMove> currentMoves;
-	int currentPlayerIndex = currentState.currentPlayer;
-	int otherPlayerIndex = 1 - currentPlayerIndex;
-	position currentPlayerPos = currentState.players[currentPlayerIndex].pos;
-	position otherPlayerPos = currentState.players[otherPlayerIndex].pos;
-	vector<position> currentPlayerNeighbours = neighbours(currentPlayerPos, currentState);
-	vector<position> otherPlayerNeighbours;
-	if (arePlayersAdjacent(currentState)) {
-		otherPlayerNeighbours = neighbours(otherPlayerPos, currentState);
-	}
-	for (int i = 0; i < currentPlayerNeighbours.size(); i++) {
-		qMove potentialMove(0, currentPlayerNeighbours[i].row, currentPlayerNeighbours[i].col);
-		if (isValidMove(currentState, potentialMove)) {
-			currentMoves.pb(potentialMove);
-		}
-	}
-	for (int i = 0; i < otherPlayerNeighbours.size(); i++) {
-		qMove potentialMove(0, otherPlayerNeighbours[i].row, otherPlayerNeighbours[i].col);
-		if (isValidMove(currentState, potentialMove)) {
-			currentMoves.pb(potentialMove);
-		}
-	}
+    int currentPlayerIndex = currentState.currentPlayer;
+    int otherPlayerIndex = 1 - currentPlayerIndex;
+    position currentPlayerPos = currentState.players[currentPlayerIndex].pos;
+    position otherPlayerPos = currentState.players[otherPlayerIndex].pos;
+    vector<position> currentPlayerNeighbours = neighbours(currentPlayerPos, currentState);
+    vector<position> otherPlayerNeighbours;
+    if (arePlayersAdjacent(currentState)) {
+        otherPlayerNeighbours = neighbours(otherPlayerPos, currentState);
+    }
+    for (int i = 0; i < currentPlayerNeighbours.size(); i++) {
+        qMove potentialMove(0, currentPlayerNeighbours[i].row, currentPlayerNeighbours[i].col);
+        if (isValidMove(currentState, potentialMove)) {
+            currentMoves.pb(potentialMove);
+        }
+    }
+    for (int i = 0; i < otherPlayerNeighbours.size(); i++) {
+        qMove potentialMove(0, otherPlayerNeighbours[i].row, otherPlayerNeighbours[i].col);
+        if (isValidMove(currentState, potentialMove)) {
+            currentMoves.pb(potentialMove);
+        }
+    }
     if (currentState.players[currentPlayerIndex].wallsLeft > 0) {
         for (int i = 2; i <= currentState.n; i++) {
             for (int j = 2; j <= currentState.m; j++) {
@@ -225,66 +224,66 @@ int canPlayerReachGoalState(gameState currentState, int playerIndex) {
 
 bool isValidPlayerMove(gameState currentState, qMove playerMove) {
     position currentPos = currentState.players[currentState.currentPlayer].pos;
-	position otherPos = currentState.players[1-currentState.currentPlayer].pos;
+    position otherPos = currentState.players[1-currentState.currentPlayer].pos;
     position movedPos;
     movedPos.row = playerMove.row;
     movedPos.col = playerMove.col;
-	if (movedPos.row == currentPos.row && movedPos.col == currentPos.col) {
-		return false;
-	}
-	if (arePositionsAdjacent(currentState, currentPos, movedPos)) {
-		if (movedPos.row == otherPos.row && movedPos.col == otherPos.col) {
-			if (isGoalState(currentState, otherPos, (1-currentState.currentPlayer))) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		return true;
-	}
-	if (arePlayersAdjacent(currentState)) {
-		if (arePositionsAdjacent(currentState, otherPos, movedPos)) {
-			position priorityPos;
-			priorityPos.row = currentPos.row + 2*(otherPos.row - currentPos.row);
-			priorityPos.col = currentPos.col + 2*(otherPos.col - currentPos.col);
-			if (isValidPosition(priorityPos, currentState) && arePositionsAdjacent(currentState, otherPos, priorityPos)) {
-				if (priorityPos.row == movedPos.row && priorityPos.col == movedPos.col) {
-					return true;
-				}
-				else {
-					return false;
-				}
-			}
-			else {
-				return true;
-			}
-		}
-	}
-	return false;
+    if (movedPos.row == currentPos.row && movedPos.col == currentPos.col) {
+        return false;
+    }
+    if (arePositionsAdjacent(currentState, currentPos, movedPos)) {
+        if (movedPos.row == otherPos.row && movedPos.col == otherPos.col) {
+            if (isGoalState(currentState, otherPos, (1-currentState.currentPlayer))) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (arePlayersAdjacent(currentState)) {
+        if (arePositionsAdjacent(currentState, otherPos, movedPos)) {
+            position priorityPos;
+            priorityPos.row = currentPos.row + 2*(otherPos.row - currentPos.row);
+            priorityPos.col = currentPos.col + 2*(otherPos.col - currentPos.col);
+            if (isValidPosition(priorityPos, currentState) && arePositionsAdjacent(currentState, otherPos, priorityPos)) {
+                if (priorityPos.row == movedPos.row && priorityPos.col == movedPos.col) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool isValidWallMove(gameState currentState, qMove wallMove) {
-	for (int i=0; i<currentState.wallsPlacedSoFar.size(); i++) {
-		int currentOrientation=currentState.wallsPlacedSoFar[i].orientation;
-		int currentRow=currentState.wallsPlacedSoFar[i].rowCenter;
-		int currentColumn=currentState.wallsPlacedSoFar[i].colCenter;
-
+    for (int i=0; i<currentState.wallsPlacedSoFar.size(); i++) {
+        int currentOrientation=currentState.wallsPlacedSoFar[i].orientation;
+        int currentRow=currentState.wallsPlacedSoFar[i].rowCenter;
+        int currentColumn=currentState.wallsPlacedSoFar[i].colCenter;
+        
         if (currentOrientation!=wallMove.type-1 && currentRow==wallMove.row && currentColumn==wallMove.col) {
-			return false;
-		}
-		else {
-			if (currentOrientation==0 && abs(currentColumn-wallMove.col)<=1 && currentRow == wallMove.row) {
-				//horizontal
-				return false;
-			}
-			else if(currentOrientation==1 && abs(currentRow-wallMove.row)<=1 && currentColumn == wallMove.col) {
-				//vertical
-				return false;
-			}
-		}
-	}
-	return true;
+            return false;
+        }
+        else {
+            if (currentOrientation==0 && abs(currentColumn-wallMove.col)<=1 && currentRow == wallMove.row) {
+                //horizontal
+                return false;
+            }
+            else if(currentOrientation==1 && abs(currentRow-wallMove.row)<=1 && currentColumn == wallMove.col) {
+                //vertical
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool isValidMove(gameState currentState, qMove myMove) {
@@ -346,7 +345,7 @@ moveEval minValue(gameState gameData, float alpha, float beta, int depth) {
     }
     
     return mev;
-
+    
 }
 
 
@@ -357,30 +356,30 @@ moveEval minValue(gameState gameData, float alpha, float beta, int depth) {
 
 
 bool arePositionsAdjacent(gameState currentState, position pos0, position pos1) {
-	bool potentiallyAdjacent = (abs(pos0.row - pos1.row) + abs(pos0.col - pos1.col) == 1);
-	if (potentiallyAdjacent) {
-		int orientationRequired = abs(pos0.col - pos1.col);
-		for(std::vector<int>::size_type i = 0; i != currentState.wallsPlacedSoFar.size(); i++) {
-			wall currentWall = currentState.wallsPlacedSoFar[i];
-			if (currentWall.orientation == orientationRequired) {
-				if (orientationRequired == 0) {
-					int potentialRowCenter = (pos0.row + pos1.row + 1)/2;
-					int colDifference = currentWall.colCenter - pos0.col;
-					if ((currentWall.rowCenter == potentialRowCenter) && (colDifference >= 0) && (colDifference <=  1)) {
-						return false;
-					}
-				}
-				if (orientationRequired == 1) {
-					int potentialColCenter = (pos0.col + pos1.col + 1)/2;
-					int rowDifference = currentWall.rowCenter - pos0.row;
-					if ((currentWall.colCenter == potentialColCenter) && (rowDifference >= 0) && (rowDifference <= 1)) {
-						return false;
-					}
-				}
-			}
-		}
-	}
-	return potentiallyAdjacent;
+    bool potentiallyAdjacent = (abs(pos0.row - pos1.row) + abs(pos0.col - pos1.col) == 1);
+    if (potentiallyAdjacent) {
+        int orientationRequired = abs(pos0.col - pos1.col);
+        for(std::vector<int>::size_type i = 0; i != currentState.wallsPlacedSoFar.size(); i++) {
+            wall currentWall = currentState.wallsPlacedSoFar[i];
+            if (currentWall.orientation == orientationRequired) {
+                if (orientationRequired == 0) {
+                    int potentialRowCenter = (pos0.row + pos1.row + 1)/2;
+                    int colDifference = currentWall.colCenter - pos0.col;
+                    if ((currentWall.rowCenter == potentialRowCenter) && (colDifference >= 0) && (colDifference <=  1)) {
+                        return false;
+                    }
+                }
+                if (orientationRequired == 1) {
+                    int potentialColCenter = (pos0.col + pos1.col + 1)/2;
+                    int rowDifference = currentWall.rowCenter - pos0.row;
+                    if ((currentWall.colCenter == potentialColCenter) && (rowDifference >= 0) && (rowDifference <= 1)) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return potentiallyAdjacent;
 }
 
 bool arePlayersAdjacent(gameState currentState) {
@@ -391,32 +390,175 @@ bool arePlayersAdjacent(gameState currentState) {
 
 
 gameState moveState(gameState currentState, qMove myMove) {
-	gameState afterMoveState = currentState;
-	if (myMove.type == 0) {
-		afterMoveState.players[currentState.currentPlayer].pos.row = myMove.row;
-		afterMoveState.players[currentState.currentPlayer].pos.col = myMove.col;
-	}
-	else if (myMove.type == 1 || myMove.type == 2) {
-		int orientation = myMove.type - 1;
-		int rowCenter = myMove.row;
-		int colCenter = myMove.col;
-		wall movedWall(orientation, rowCenter, colCenter);
-		afterMoveState.wallsPlacedSoFar.pb(movedWall);
-		afterMoveState.players[currentState.currentPlayer].wallsLeft--;
-	}
-	afterMoveState.currentPlayer = 1 - afterMoveState.currentPlayer;
-	return afterMoveState;
+    gameState afterMoveState = currentState;
+    if (myMove.type == 0) {
+        afterMoveState.players[currentState.currentPlayer].pos.row = myMove.row;
+        afterMoveState.players[currentState.currentPlayer].pos.col = myMove.col;
+    }
+    else if (myMove.type == 1 || myMove.type == 2) {
+        int orientation = myMove.type - 1;
+        int rowCenter = myMove.row;
+        int colCenter = myMove.col;
+        wall movedWall(orientation, rowCenter, colCenter);
+        afterMoveState.wallsPlacedSoFar.pb(movedWall);
+        afterMoveState.players[currentState.currentPlayer].wallsLeft--;
+    }
+    afterMoveState.currentPlayer = 1 - afterMoveState.currentPlayer;
+    return afterMoveState;
 }
 
+/* Complete the function below to print 1 integer which will be your next move
+ */
+int N,M,K, time_left, player;
 
-int main(int argc, const char * argv[]) {
-	// insert code here...
+
+gameState GS(1,1,1);
+
+
+int main(int argc, char *argv[])
+{
+    srand (time(NULL));
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    char sendBuff[1025];
+    struct sockaddr_in serv_addr;
     
-    gameState GS(9,9,8);
-//    GS = moveState(GS, qMove(1, 5, 4));
-//    GS = moveState(GS, qMove(1, 5, 2));
-    GS = moveState(GS , qMove(1, 5, 6));
-//    GS = moveState(GS, qMove(1, 5, 8));
-    cout << canPlayerReachGoalState(GS, 0);
-	return 0;
+    if(argc != 3)
+    {
+        printf("\n Usage: %s <ip of server> <port no> \n",argv[0]);
+        return 1;
+    }
+    
+    
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Error : Could not create socket \n");
+        return 1;
+    }
+    
+    memset(&serv_addr, '0', sizeof(serv_addr));
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(atoi(argv[2]));
+    
+    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
+    {
+        printf("\n inet_pton error occured\n");
+        return 1;
+    }
+    
+    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\n Error : Connect Failed \n");
+        return 1;
+    }
+    
+    cout<<"Quoridor will start..."<<endl;
+    
+    memset(recvBuff, '0',sizeof(recvBuff));
+    n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+    recvBuff[n] = 0;
+    sscanf(recvBuff, "%d %d %d %d %d", &player, &N, &M, &K, &time_left);
+    
+    GS=gameState(N,M,K);
+    cout<<"asdkhf "<<GS.n<<" asdkh "<<GS.m<<" "<<GS.players[0].wallsLeft;
+    
+    cout<<"Player "<<player<<endl;
+    cout<<"Time "<<time_left<<endl;
+    cout<<"Board size "<<N<<"x"<<M<<" :"<<K<<endl;
+    float TL;
+    int om,oro,oc;
+    int m,r,c;
+    int d=3;
+    char s[100];
+    int x=1;
+    if(player == 1)
+    {
+        
+        memset(sendBuff, '0', sizeof(sendBuff));
+        string temp;
+        //	cin>>m>>r>>c;
+        qMove moveToMake=alphaBetaSearch(GS, 2);
+        GS=moveState(GS, moveToMake);
+        snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", moveToMake.type, moveToMake.row , moveToMake.col);
+        write(sockfd, sendBuff, strlen(sendBuff));
+        
+        memset(recvBuff, '0',sizeof(recvBuff));
+        n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+        recvBuff[n] = 0;
+        sscanf(recvBuff, "%f %d", &TL, &d);
+        cout<<TL<<" "<<d<<endl;
+        if(d==1)
+        {
+            cout<<"You win!! Yayee!! :D ";
+            x=0;
+        }
+        else if(d==2)
+        {
+            cout<<"Loser :P ";
+            x=0;
+        }
+    }
+    
+    while(x)
+    {
+        memset(recvBuff, '0',sizeof(recvBuff));
+        n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+        recvBuff[n] = 0;
+        sscanf(recvBuff, "%d %d %d %d", &om,&oro,&oc,&d);
+        cout << om<<" "<<oro<<" "<<oc << " "<<d<<endl;
+        qMove opponentMove(om,oro,oc);
+        GS=moveState(GS,opponentMove);
+        
+        if(d==1)
+        {
+            cout<<"You win!! Yayee!! :D ";
+            break;
+        }
+        else if(d==2)
+        {
+            cout<<"Loser :P ";
+            break;
+        }
+        memset(sendBuff, '0', sizeof(sendBuff));
+        string temp;
+        qMove moveToMake=alphaBetaSearch(GS, 2);
+        GS=moveState(GS, moveToMake);
+        snprintf(sendBuff, sizeof(sendBuff), "%d %d %d", moveToMake.type, moveToMake.row , moveToMake.col);
+        write(sockfd, sendBuff, strlen(sendBuff));
+        
+        memset(recvBuff, '0',sizeof(recvBuff));
+        n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+        recvBuff[n] = 0;
+        sscanf(recvBuff, "%f %d", &TL, &d);//d=3 indicates game continues.. d=2 indicates lost game, d=1 means game won.
+        cout<<TL<<" "<<d<<endl;
+        if(d==1)
+        {
+            cout<<"You win!! Yayee!! :D ";
+            break;
+        }
+        else if(d==2)
+        {
+            cout<<"Loser :P ";
+            break;
+        }
+    }
+    cout<<endl<<"The End"<<endl;
+    return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
