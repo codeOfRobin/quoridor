@@ -15,9 +15,10 @@ Create moves, add to minimax, integrate.
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <cfloat>
 #define pb push_back
 #define mp make_pair
-#define infinity 999999
+#define infinity FLT_MAX
 using namespace std;
 
 
@@ -43,6 +44,26 @@ struct qMove {
 		row = r;
 		col = c;
 	}
+    
+    qMove() {
+        type = -1;
+        row = -1;
+        col = -1;
+    }
+};
+
+struct moveEval {
+    qMove move;
+    float eval;
+    
+    moveEval(qMove m, float f) {
+        move = m;
+        eval = f;
+    }
+    
+    moveEval(float f) {
+        eval = f;
+    }
 };
 
 struct position {
@@ -80,8 +101,8 @@ struct gameState {
 		currentPlayer = 0;
 		n = length;
 		m = breadth;
-		this->players[0] = player(0, m/2, totalWalls);
-		this->players[1] = player(n-1, m/2,totalWalls);
+		this->players[0] = player(1, m/2, totalWalls);
+		this->players[1] = player(n, m/2,totalWalls);
 	}
 	
 };
@@ -89,13 +110,14 @@ struct gameState {
 
 //function definitions
 float evalFunction(gameState);
-float maxValue(gameState gameData, float alpha, float beta);
+moveEval maxValue(gameState gameData, float alpha, float beta);
 bool arePositionsAdjacent(gameState currentState, position pos0, position pos1);
 bool arePlayersAdjacent(gameState currentState);
 bool isValidPosition(position pos, gameState currentState);
 vector<position> neighbours(position pos, gameState currentState);
 bool isValidMove(gameState currentState, qMove myMove);
-
+gameState moveState(gameState currentState, qMove myMove);
+moveEval minValue(gameState gameData, float alpha, float beta);
 
 //minimax stuff
 
@@ -105,7 +127,6 @@ vector<qMove> validMoves(gameState currentState) {
 	int otherPlayerIndex = 1 - currentPlayerIndex;
 	position currentPlayerPos = currentState.players[currentPlayerIndex].pos;
 	position otherPlayerPos = currentState.players[otherPlayerIndex].pos;
-	vector<qMove> possiblePlayerMoves;
 	vector<position> currentPlayerNeighbours = neighbours(currentPlayerPos, currentState);
 	vector<position> otherPlayerNeighbours;
 	if (arePlayersAdjacent(currentState)) {
@@ -123,8 +144,8 @@ vector<qMove> validMoves(gameState currentState) {
 			currentMoves.pb(potentialMove);
 		}
 	}
-	for (int i = 2; i < currentState.n; i++) {
-		for (int j = 2; j < currentState.m; j++) {
+	for (int i = 2; i <= currentState.n; i++) {
+		for (int j = 2; j <= currentState.m; j++) {
 			qMove potentialMove1(1, i, j);
 			if (isValidMove(currentState, potentialMove1)) {
 				currentMoves.pb(potentialMove1);
@@ -205,7 +226,7 @@ bool isValidPlayerMove(gameState currentState, qMove playerMove) {
     position movedPos;
     movedPos.row = playerMove.row;
     movedPos.col = playerMove.col;
-	if (currentPos.row == otherPos.row && currentPos.col == currentPos.row) {
+	if (movedPos.row == currentPos.row && movedPos.col == currentPos.col) {
 		return false;
 	}
 	if (arePositionsAdjacent(currentState, currentPos, movedPos)) {
@@ -224,7 +245,7 @@ bool isValidPlayerMove(gameState currentState, qMove playerMove) {
 			position priorityPos;
 			priorityPos.row = currentPos.row + 2*(otherPos.row - currentPos.row);
 			priorityPos.col = currentPos.col + 2*(otherPos.col - currentPos.col);
-			if (arePositionsAdjacent(currentState, otherPos, priorityPos)) {
+			if (isValidPosition(priorityPos, currentState) && arePositionsAdjacent(currentState, otherPos, priorityPos)) {
 				if (priorityPos.row == movedPos.row && priorityPos.col == movedPos.col) {
 					return true;
 				}
@@ -281,47 +302,46 @@ bool isValidMove(gameState currentState, qMove myMove) {
 }
 
 qMove alphaBetaSearch(gameState gameData) {
-    float v=maxValue(gameData,-infinity,infinity);
-    vector<qMove> allMovesPossible=validMoves(gameData);
-    return allMovesPossible[0];
+    moveEval me=maxValue(gameData,-infinity,infinity);
+    return me.move;
 }
 
-float maxValue(gameState gameData, float alpha, float beta) {
+moveEval maxValue(gameState gameData, float alpha, float beta) {
     if (gameData.children.size()==0) {
-        return evalFunction(gameData);
+        return moveEval(evalFunction(gameData));
     }
-    float v=-infinity;
+    
+    moveEval mev = moveEval(-infinity);
     
     vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++) {
-        //        v=max(const _Tp &__a, <#const _Tp &__b#>, <#_Compare __comp#>)
-        if (v>=beta) {
-            return v;
+        mev.eval=max(mev.eval,minValue(moveState(gameData, actions[i]), alpha, beta).eval);
+        if (mev.eval>=beta) {
+            return moveEval(actions[i], mev.eval);
         }
-        
-        alpha=max(alpha, v);
+        alpha = max(alpha, mev.eval);
     }
     
-    return v;
+    return mev;
 }
 
 
-float minValue(gameState gameData, float alpha, float beta) {
+moveEval minValue(gameState gameData, float alpha, float beta) {
     if (gameData.children.size()==0) {
-        return evalFunction(gameData);
+        return moveEval(evalFunction(gameData));
     }
-    float v=infinity;
+    moveEval mev(infinity);
     vector<qMove> actions=validMoves(gameData);
     for (int i=0; i<actions.size(); i++) {
-        //        v=max(<#const _Tp &__a#>, <#const _Tp &__b#>, <#_Compare __comp#>)
-        if (v<=alpha) {
-            return v;
+        mev.eval=min(mev.eval,maxValue(moveState(gameData, actions[i]), alpha, beta).eval);
+        if (mev.eval<=alpha) {
+            return moveEval(actions[i], mev.eval);
         }
         
-        beta=min(beta,v);
+        beta = min(beta, mev.eval);
     }
     
-    return v;
+    return mev;
 
 }
 
@@ -390,6 +410,20 @@ gameState moveState(gameState currentState, qMove myMove) {
 
 int main(int argc, const char * argv[]) {
 	// insert code here...
-	
+    
+    gameState GS(9,9,8);
+    GS.players[0].pos.row=8;
+    GS.players[0].pos.col=8;
+    GS.players[1].pos.row=9;
+    GS.players[1].pos.col=8;
+    vector<qMove> valid=validMoves(GS);
+    vector<qMove> type0;
+    for (int i=0; i<valid.size(); i++)
+    {
+        if (valid[i].type==0)
+        {
+            type0.pb(valid[i]);
+        }
+    }
 	return 0;
 }
