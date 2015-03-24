@@ -93,14 +93,48 @@ float maxValue(gameState gameData, float alpha, float beta);
 bool arePositionsAdjacent(gameState currentState, position pos0, position pos1);
 bool arePlayersAdjacent(gameState currentState);
 bool isValidPosition(position pos, gameState currentState);
+vector<position> neighbours(position pos, gameState currentState);
+bool isValidMove(gameState currentState, qMove myMove);
 
 
 //minimax stuff
 
-
 vector<qMove> validMoves(gameState currentState) {
     vector<qMove> currentMoves;
-    
+	int currentPlayerIndex = currentState.currentPlayer;
+	int otherPlayerIndex = 1 - currentPlayerIndex;
+	position currentPlayerPos = currentState.players[currentPlayerIndex].pos;
+	position otherPlayerPos = currentState.players[otherPlayerIndex].pos;
+	vector<qMove> possiblePlayerMoves;
+	vector<position> currentPlayerNeighbours = neighbours(currentPlayerPos, currentState);
+	vector<position> otherPlayerNeighbours;
+	if (arePlayersAdjacent(currentState)) {
+		otherPlayerNeighbours = neighbours(otherPlayerPos, currentState);
+	}
+	for (int i = 0; i < currentPlayerNeighbours.size(); i++) {
+		qMove potentialMove(0, currentPlayerNeighbours[i].row, currentPlayerNeighbours[i].col);
+		if (isValidMove(currentState, potentialMove)) {
+			currentMoves.pb(potentialMove);
+		}
+	}
+	for (int i = 0; i < otherPlayerNeighbours.size(); i++) {
+		qMove potentialMove(0, otherPlayerNeighbours[i].row, otherPlayerNeighbours[i].col);
+		if (isValidMove(currentState, potentialMove)) {
+			currentMoves.pb(potentialMove);
+		}
+	}
+	for (int i = 2; i < currentState.n; i++) {
+		for (int j = 2; j < currentState.m; j++) {
+			qMove potentialMove1(1, i, j);
+			if (isValidMove(currentState, potentialMove1)) {
+				currentMoves.pb(potentialMove1);
+			}
+			qMove potentialMove2(2, i, j);
+			if (isValidMove(currentState, potentialMove2)) {
+				currentMoves.pb(potentialMove2);
+			}
+		}
+	}
     return currentMoves;
 }
 
@@ -230,7 +264,7 @@ bool isValidWallMove(gameState currentState, qMove wallMove) {
 
 bool isValidMove(gameState currentState, qMove myMove) {
     int type = myMove.type;
-    if (type == 1) {
+    if (type == 0) {
         if (myMove.row >= 1 && myMove.col >= 1 && myMove.row <= currentState.n && myMove.col <= currentState.m) {
             return isValidPlayerMove(currentState, myMove);
         }
@@ -238,7 +272,7 @@ bool isValidMove(gameState currentState, qMove myMove) {
             return false;
         }
     }
-    if (type == 2 || type == 3) {
+    if (type == 1 || type == 2) {
         if (myMove.row >= 2 && myMove.col >= 2 && myMove.row <= currentState.n && myMove.col <= currentState.m) {
             return isValidWallMove(currentState, myMove);
         }
@@ -352,8 +386,6 @@ gameState moveState(gameState currentState, qMove myMove) {
 	afterMoveState.currentPlayer = 1 - afterMoveState.currentPlayer;
 	return afterMoveState;
 }
-
-
 
 
 int main(int argc, const char * argv[]) {
